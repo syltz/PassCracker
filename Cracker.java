@@ -5,8 +5,10 @@ import java.io.*;
 import javax.xml.bind.DatatypeConverter;
 
 public class Cracker  {
-    public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+    private static ArrayList<String> wordlist = new ArrayList<String>();
+    public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException, FileNotFoundException {
         String inputHash = null;
+        File wordlistFile = null;
         try {
             inputHash = args[0];
         } catch (ArrayIndexOutOfBoundsException noHash) {
@@ -14,12 +16,17 @@ public class Cracker  {
             System.exit(0);
         }
         try {
-            File wordlist = new File(args[1]);
+            wordlistFile = new File(args[1]);
+            genWordlist(wordlistFile);
         } catch (ArrayIndexOutOfBoundsException e) {
-            File wordlist = null; //No one actually cares, this just means no wordlist
+            System.out.println("No wordlist loaded"); //No one actually cares, this just means no wordlistFile
         }
-        System.out.println(compareHashToWord(inputHash, "asd"));
-        
+        if (wordlistFile == null) {
+            System.out.println("No wordlist? I'm not going to fucking brute force this. Don't be dumb.");
+            System.exit(0);
+        } else {
+            wordlistAttack(inputHash);
+        }
     }
     public static boolean compareHashToWord(String hash, String word) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest md = MessageDigest.getInstance("MD5");
@@ -28,5 +35,19 @@ public class Cracker  {
         byte[] digestBytes = md.digest();
         String genHash = DatatypeConverter.printHexBinary(digestBytes);
         return hash.equalsIgnoreCase(genHash);
+    }
+    public static void genWordlist(File wordlistFile) throws FileNotFoundException {
+        Scanner readList = new Scanner(wordlistFile);
+        while (readList.hasNext()) {
+            wordlist.add(readList.next());
+        }
+    }
+    public static void wordlistAttack(String hash) throws NoSuchAlgorithmException, UnsupportedEncodingException {
+        for (int i = 0; i < wordlist.size(); i++) {
+            if (compareHashToWord(hash, wordlist.get(i))) {
+                System.out.println("Match found: " + wordlist.get(i));
+                System.exit(0);
+            }
+        }
     }
 }
