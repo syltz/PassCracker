@@ -1,9 +1,11 @@
 import java.util.*;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.io.*;
+import javax.xml.bind.DatatypeConverter;
 
 public class Cracker  {
-    public static void main(String[] args) throws NoSuchAlgorithmException {
+    public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         String inputHash = null;
         try {
             inputHash = args[0];
@@ -19,11 +21,12 @@ public class Cracker  {
         System.out.println(compareHashToWord(inputHash, "asd"));
         
     }
-    public static boolean compareHashToWord(String hash, String word) throws NoSuchAlgorithmException {
+    public static boolean compareHashToWord(String hash, String word) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         MessageDigest md = MessageDigest.getInstance("MD5");
-        byte[] bytesOfWord = word.getBytes();
+        byte[] bytesOfWord = word.getBytes(StandardCharsets.UTF_8.name());
         md.update(bytesOfWord);
-        System.out.println("md digest: " + md.digest);
-        return Arrays.equals(hash.getBytes(), md.digest());
+        byte[] digestBytes = md.digest();
+        String genHash = DatatypeConverter.printHexBinary(digestBytes);
+        return hash.equalsIgnoreCase(genHash);
     }
 }
