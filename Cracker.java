@@ -1,7 +1,5 @@
 /* 
  * TO DO LIST
- * Create a method to check entire lines (readLine.nexLine()) 
- * Redo the input method, use scanner from system in rather than args
  * Add a check for -h and --help flags and write some info
  */
 import java.util.*;
@@ -13,23 +11,43 @@ import javax.xml.bind.DatatypeConverter;
 public class Cracker  {
     private static ArrayList<String> wordlist = new ArrayList<String>();
     public static void main(String[] args) throws NoSuchAlgorithmException, UnsupportedEncodingException, FileNotFoundException {
+        
         String inputHash = null;
         File wordlistFile = null;
-        try {
-            inputHash = args[0];
-        } catch (ArrayIndexOutOfBoundsException noHashException) {
-            System.out.println("You have to provide a hash dude"); //Can't really do anything without a hash
-            System.out.println(noHashException);
-            System.exit(0);
+        Scanner userSelection = new Scanner(System.in);
+        String userChoice;
+        System.out.print("Input hash: ");
+        inputHash = userSelection.next();
+        System.out.println();
+        System.out.print("Supply a wordlist file: ");
+        wordlistFile = new File(userSelection.next());
+        System.out.println();
+        while (true) {
+            System.out.println("What kind of attack?");
+            System.out.println("1) Read one line as a string");
+            System.out.println("2) Read each individial word as a string");
+            System.out.println("3) Read several words separated by spaces as a string");
+            System.out.print("(1/2/3/q): ");
+            userChoice = userSelection.next();
+            System.out.println();
+            if (userChoice.equals("1"))
+                lineAttack(inputHash, wordlistFile);
+            else if (userChoice.equals("2"))
+                wordlistAttack(inputHash, wordlistFile);
+            else if (userChoice.equals("3")) {
+                System.out.print("How many words? ");
+                int numOfWords = 0;
+                try {
+                    numOfWords = userSelection.nextInt();
+                } catch (IllegalArgumentException e) {
+                    System.out.println();
+                    System.out.println("Only numbers idiot");
+                }
+                multiWordAttack(inputHash, wordlistFile, numOfWords);
+            }
+            else if (userChoice.equals("q")) 
+                System.exit(0);
         }
-        try {
-            wordlistFile = new File(args[1]);
-        } catch (ArrayIndexOutOfBoundsException noWordlistException) {
-            System.out.println("Either you're not misspelling the file name or you're expecting me to brute force this shit."); //What the println says
-            System.out.println(noWordlistException);
-            System.exit(0);
-        }
-        wordlistAttack(inputHash, wordlistFile);
     }
     public static boolean compareHashToWord(String hash, String word) throws NoSuchAlgorithmException, UnsupportedEncodingException {
         //What kind of hash function is it? At some point I'll make it possible to change the
@@ -62,8 +80,8 @@ public class Cracker  {
             //If the number of words we want to check together are more than there are words in the
             //wordlist we'll just exit the method
             try {
-                words[i] = readLine.next();
-            } catch (EOFException e) {
+                words[i] = readList.next();
+            } catch (NoSuchElementException e) {
                 return;
             }
         }
@@ -76,7 +94,7 @@ public class Cracker  {
                 fullString.append(" ").append(words[i]);
             }
             if (compareHashToWord(hash, fullString.toString())) { //If it's a match call the matchFound
-                matchFound(fullString);
+                matchFound(fullString.toString());
             } else { //If it's not a match we exit
                 noMatch();
             }
@@ -95,6 +113,18 @@ public class Cracker  {
             }
             words[words.length-1] = readList.next();
         }
+    }
+    public static void lineAttack(String hash, File wordlist) throws NoSuchAlgorithmException, UnsupportedEncodingException, FileNotFoundException {
+        System.out.println("Reading entire lines");
+        Scanner readList = new Scanner(wordlist);
+        String fullString;
+        while (readList.hasNext()) {
+            fullString = readList.nextLine();
+            if(compareHashToWord(hash, fullString)) {
+                matchFound(fullString);
+            }
+        }
+        noMatch();
     }
     private static void matchFound(String match) {
         System.out.println("Match found: " + match);
